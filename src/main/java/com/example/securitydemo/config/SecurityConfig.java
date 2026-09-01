@@ -33,9 +33,10 @@ public class SecurityConfig {
         http.csrf(AbstractHttpConfigurer::disable)
                 .authorizeHttpRequests(auth->
                         auth.requestMatchers("/authenticate").permitAll()
-                                .requestMatchers(HttpMethod.GET, "/health/**").hasAuthority(Permission.WEATHER_READ.name())
-                                .requestMatchers(HttpMethod.POST, "/health/**").hasAuthority(Permission.WEATHER_WRITE.name())
-                                .requestMatchers(HttpMethod.DELETE, "/health/**").hasAuthority(Permission.WEATHER_DELETE.name())
+                                .requestMatchers("/registerUser").permitAll()
+                                //.requestMatchers(HttpMethod.GET, "/health/**").hasAuthority(Permission.WEATHER_READ.name())
+                                //.requestMatchers(HttpMethod.POST, "/health/**").hasAuthority(Permission.WEATHER_WRITE.name())
+                                //.requestMatchers(HttpMethod.DELETE, "/health/**").hasAuthority(Permission.WEATHER_DELETE.name())
                                 .anyRequest().authenticated());
         http.addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class);
         return http.build();
