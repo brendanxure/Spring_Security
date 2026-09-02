@@ -22,6 +22,7 @@ public class Users implements UserDetails {
     private Long Id;
     private String username;
     private String password;
+    private String googleId;
     @Enumerated(EnumType.STRING)
     private Role role;
 

@@ -2,6 +2,7 @@ package com.example.securitydemo.config;
 
 import com.example.securitydemo.entity.Permission;
 import com.example.securitydemo.filters.JwtAuthFilter;
+import com.example.securitydemo.service.CustomOidcUserService;
 import com.example.securitydemo.service.CustomUserDetailsService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
@@ -10,6 +11,7 @@ import org.springframework.http.HttpMethod;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.ProviderManager;
 import org.springframework.security.authentication.dao.DaoAuthenticationProvider;
+import org.springframework.security.config.Customizer;
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
@@ -29,23 +31,30 @@ public class SecurityConfig {
     @Autowired
     JwtAuthFilter jwtAuthFilter;
     @Bean
-    public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
+    public SecurityFilterChain filterChain(HttpSecurity http,
+                                           CustomOidcUserService customOidcUserService) throws Exception {
         http.csrf(AbstractHttpConfigurer::disable)
                 .authorizeHttpRequests(auth->
                         auth.requestMatchers("/authenticate").permitAll()
-                                .requestMatchers("/registerUser").permitAll()
+                                .requestMatchers("/user/register").permitAll()
+                                .requestMatchers("/oauth2/**", "/login/**").permitAll()
                                 //.requestMatchers(HttpMethod.GET, "/health/**").hasAuthority(Permission.WEATHER_READ.name())
-                                //.requestMatchers(HttpMethod.POST, "/health/**").hasAuthority(Permission.WEATHER_WRITE.name())
-                                //.requestMatchers(HttpMethod.DELETE, "/health/**").hasAuthority(Permission.WEATHER_DELETE.name())
-                                .anyRequest().authenticated());
+                                .anyRequest().authenticated())
+                .oauth2Login(oauth ->
+                        oauth
+                                .userInfoEndpoint(userInfo ->
+                                        userInfo
+                                                .oidcUserService(customOidcUserService)
+                                )
+                );
         http.addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class);
         return http.build();
     }
 
-    @Bean
-    public UserDetailsService userDetailsService(){
-        return new CustomUserDetailsService();
-    }
+//    @Bean
+//    public UserDetailsService userDetailsService(){
+//        return new CustomUserDetailsService();
+//    }
 
     @Bean
     public PasswordEncoder passwordEncoder() {
@@ -53,7 +62,7 @@ public class SecurityConfig {
     }
 
     @Bean
-    public AuthenticationManager authenticationManager (UserDetailsService userDetailsService){
+    public AuthenticationManager authenticationManager (CustomUserDetailsService userDetailsService){
         DaoAuthenticationProvider daoAuthenticationProvider = new DaoAuthenticationProvider(userDetailsService);
         daoAuthenticationProvider.setPasswordEncoder(passwordEncoder());
         return new ProviderManager(daoAuthenticationProvider);
