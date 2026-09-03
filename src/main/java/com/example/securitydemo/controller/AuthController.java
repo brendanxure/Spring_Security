@@ -26,12 +26,25 @@ public class AuthController {
     @PostMapping("/authenticate")
     public String generateToken (@RequestBody AuthRequest authRequest){
        try{
+           System.out.println("🔥 AUTHENTICATE CONTROLLER REACHED");
            authenticationManager.authenticate(
                    new UsernamePasswordAuthenticationToken(authRequest.getUsername(), authRequest.getPassword()));
            return jwtUtil.generateToken(authRequest.getUsername());
        }catch (Exception e){
             throw e;
        }
+    }
+
+    @GetMapping("/admin-test")
+    @PreAuthorize("hasRole('ADMIN')")
+    public String adminTest() {
+        return "You are an ADMIN";
+    }
+
+    @GetMapping("/user-test")
+    @PreAuthorize("hasRole('USER')")
+    public String userTest() {
+        return "You are a USER";
     }
 
     @GetMapping("/health")

@@ -4,9 +4,11 @@ import com.example.securitydemo.entity.Permission;
 import com.example.securitydemo.filters.JwtAuthFilter;
 import com.example.securitydemo.service.CustomOidcUserService;
 import com.example.securitydemo.service.CustomUserDetailsService;
+import com.example.securitydemo.util.CustomOAuth2SuccessHandler;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.core.annotation.Order;
 import org.springframework.http.HttpMethod;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.ProviderManager;
@@ -30,24 +32,41 @@ import static org.springframework.security.config.Customizer.withDefaults;
 public class SecurityConfig {
     @Autowired
     JwtAuthFilter jwtAuthFilter;
+
     @Bean
-    public SecurityFilterChain filterChain(HttpSecurity http,
-                                           CustomOidcUserService customOidcUserService) throws Exception {
-        http.csrf(AbstractHttpConfigurer::disable)
+    @Order(1)
+    public SecurityFilterChain apiFilterChain(HttpSecurity http) throws Exception {
+        http.securityMatcher(
+                        "/authenticate",
+                        "/user/**",
+                        "/user-test",
+                        "/admin-test")
+                .csrf(AbstractHttpConfigurer::disable)
                 .authorizeHttpRequests(auth->
                         auth.requestMatchers("/authenticate").permitAll()
                                 .requestMatchers("/user/register").permitAll()
-                                .requestMatchers("/oauth2/**", "/login/**").permitAll()
+                                //.requestMatchers(HttpMethod.GET, "/health/**").hasAuthority(Permission.WEATHER_READ.name())
+                                .anyRequest().authenticated());
+        http.addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class);
+        return http.build();
+    }
+
+    @Bean
+    @Order(2)
+    public SecurityFilterChain oauthFilterChain(HttpSecurity http,
+                                           CustomOidcUserService customOidcUserService,
+                                           CustomOAuth2SuccessHandler customOAuth2SuccessHandler) throws Exception {
+        http.securityMatcher("/oauth2/**", "/login/**")
+                .csrf(AbstractHttpConfigurer::disable)
+                .authorizeHttpRequests(auth->
+                        auth.requestMatchers("/oauth2/**", "/login/**").permitAll()
                                 //.requestMatchers(HttpMethod.GET, "/health/**").hasAuthority(Permission.WEATHER_READ.name())
                                 .anyRequest().authenticated())
                 .oauth2Login(oauth ->
-                        oauth
-                                .userInfoEndpoint(userInfo ->
-                                        userInfo
-                                                .oidcUserService(customOidcUserService)
-                                )
+                        oauth.userInfoEndpoint(userInfo ->
+                                        userInfo.oidcUserService(customOidcUserService))
+                                .successHandler(customOAuth2SuccessHandler)
                 );
-        http.addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class);
         return http.build();
     }
 

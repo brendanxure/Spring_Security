@@ -23,4 +23,5 @@ public class UserController {
         UserResponse newUser =  userService.registerUser(registerUserRequest);
         return ResponseEntity.ok(newUser);
     }
+
 }
