@@ -17,7 +17,7 @@ public class UserController {
         this.userService = userService;
     }
 
-    @PostMapping("/registerUser")
+    @PostMapping("/user/register")
     public ResponseEntity<UserResponse> registerUser(@RequestBody RegisterUserRequest registerUserRequest){
         registerUserRequest.setRole(Role.USER);
         UserResponse newUser =  userService.registerUser(registerUserRequest);
