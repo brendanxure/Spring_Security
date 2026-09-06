@@ -1,5 +1,6 @@
 package com.example.securitydemo.service;
 
+import com.example.securitydemo.entity.Role;
 import com.example.securitydemo.entity.Users;
 import com.example.securitydemo.repository.UserDetailsRepository;
 import org.springframework.security.oauth2.client.oidc.userinfo.OidcUserRequest;
@@ -32,9 +33,6 @@ public class CustomOidcUserService extends OidcUserService {
         System.out.println("Email: " + email);
         System.out.println("Name: " + name);
         System.out.println("Picture: " + picture);
-
-        Users existingUser =
-                ;
 
         if (userDetailsRepository.findByGoogleId(googleId).isPresent()) {
             return oidcUser;
